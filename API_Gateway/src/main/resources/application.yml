@@ -1,0 +1,12 @@
+server:
+  port: 8083
+  
+spring:  application:    name: API_GATEWAY
+      cloud:    gateway:      routes:      - id: SELLER-SERVICE
+        uri:          lb://SELLER-SERVICE
+        predicates:        - Path=/seller/**
+      - id: BUYER-SERVICE
+        uri:
+          lb://BUYER-SERVICE
+        predicates:
+        - Path=/buyer/**
