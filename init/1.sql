@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS `BuyerDB`;
+GRANT ALL ON `BuyerDB`.* TO 'root'@'%';
+
+CREATE DATABASE IF NOT EXISTS `SellerDB`;
+GRANT ALL ON `SellerDB`.* TO 'root'@'%';

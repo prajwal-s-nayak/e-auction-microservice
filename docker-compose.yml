@@ -1,0 +1,121 @@
+version: "3"
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      - proxynet
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    networks:
+      - proxynet
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  db:
+    image: mysql
+    container_name: mysql_db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: pass@word1
+      MYSQL_DATABASE: UserDB
+    ports:
+      - 3305:3306
+    networks:
+      - proxynet
+    
+    volumes: 
+      - ./init:/docker-entrypoint-initdb.d
+    
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - 8999:8080
+    networks:
+      - proxynet
+  
+  eureka:
+    image: prajwalnayak/e-auction-eureka:latest
+    container_name: eureka
+    restart: always
+    ports:
+      - 8761:8761
+    networks:
+      - proxynet
+
+  apigateway:
+    image: prajwalnayak/e-auction-apigateway:latest
+    container_name: apigateway
+    restart: always
+    ports:
+      - 8083:8083
+    networks:
+      - proxynet
+    depends_on:
+      - eureka
+
+  user:
+    image: prajwalnayak/e-auction-user:latest
+    container_name: user
+    restart: always
+    ports:
+      - 8081:8081
+    networks:
+      - proxynet
+    depends_on:
+      - eureka
+      - db
+
+  seller:
+    image: prajwalnayak/e-auction-seller:latest
+    container_name: seller
+    restart: always
+    ports:
+      - 8082:8082
+    networks:
+      - proxynet
+    depends_on:
+      - user
+
+  buyer:
+    image: prajwalnayak/e-auction-buyer:latest
+    container_name: buyer
+    restart: always
+    ports:
+      - 8084:8084
+    networks:
+      - proxynet
+    depends_on:
+      - user
+      - kafka
+
+  frontend:
+    image: prajwalnayak/e-auction-frontend:latest
+    container_name: frontend
+    restart: always
+    ports:
+      - 3000:3000
+    networks:
+      - proxynet
+
+networks:
+  proxynet:
+    name: eauction_network
